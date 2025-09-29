@@ -5,11 +5,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import NameScreen from './screens/NameScreen';
 import JoinCodeScreen from './screens/JoinCodeScreen';
 import HomeScreen from './screens/HomeScreen';
+import GenerateCodeScreen from './screens/GenerateCodeScreen';
 
 export type RootStackParamList = {
   Name: undefined;
   JoinCode: { name: string };
   Home: { name: string };
+  GenerateCode: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -54,6 +56,11 @@ export default function App() {
           name="Home"
           component={HomeScreen}
           options={{ title: 'Home' }}
+        />
+        <Stack.Screen
+          name="GenerateCode"
+          component={GenerateCodeScreen}
+          options={{ title: 'Create join code' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

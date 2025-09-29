@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
 
@@ -7,6 +8,18 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Name'>;
 
 export default function NameScreen({ navigation }: Props) {
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const saved = await AsyncStorage.getItem('userName');
+        if (saved) {
+          setName(saved);
+        }
+      } catch {}
+    })();
+  }, []);
 
   const canContinue = name.trim().length > 0;
 
@@ -28,10 +41,18 @@ export default function NameScreen({ navigation }: Props) {
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.button, !canContinue && styles.buttonDisabled]}
-            disabled={!canContinue}
-            onPress={() => navigation.navigate('JoinCode', { name: name.trim() })}
+            disabled={!canContinue || loading}
+            onPress={async () => {
+              const trimmed = name.trim();
+              try {
+                setLoading(true);
+                await AsyncStorage.setItem('userName', trimmed);
+              } catch {}
+              setLoading(false);
+              navigation.navigate('JoinCode', { name: trimmed });
+            }}
           >
-            <Text style={[styles.buttonText, !canContinue && styles.buttonTextDisabled]}>Continue</Text>
+            <Text style={[styles.buttonText, (!canContinue || loading) && styles.buttonTextDisabled]}>{loading ? 'Saving…' : 'Continue'}</Text>
           </TouchableOpacity>
         </View>
       </TouchableWithoutFeedback>

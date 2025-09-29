@@ -41,6 +41,15 @@ export default function JoinCodeScreen({ route, navigation }: Props) {
           >
             <Text style={[styles.buttonText, !canJoin && styles.buttonTextDisabled]}>Join</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => navigation.navigate('GenerateCode')}
+            style={styles.linkButton}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.linkText}>Create a new join code</Text>
+          </TouchableOpacity>
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -74,6 +83,8 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.25 },
   buttonText: { color: '#000', fontSize: 17, fontWeight: '700', letterSpacing: 0.4 },
   buttonTextDisabled: { color: 'rgba(0,0,0,0.6)' },
+  linkButton: { paddingVertical: 16, alignItems: 'center' },
+  linkText: { color: 'rgba(255,255,255,0.85)', textDecorationLine: 'underline', fontSize: 15 },
 });
 
 
