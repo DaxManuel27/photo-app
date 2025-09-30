@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingVi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
+import { supabase } from '../lib/supabase'; // Add this import
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Name'>;
 
@@ -17,7 +18,18 @@ export default function NameScreen({ navigation }: Props) {
         if (saved) {
           setName(saved);
         }
-      } catch {}
+        
+        // Test Supabase connection
+        console.log('Testing Supabase connection...');
+        const { data, error } = await supabase.from('users').select('count', { count: 'exact' });
+        if (error) {
+          console.error('Supabase connection failed:', error);
+        } else {
+          console.log('✅ Supabase connected successfully!', data);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
     })();
   }, []);
 

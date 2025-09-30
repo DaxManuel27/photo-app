@@ -1,44 +1,33 @@
-
-create extension if not exists pgcrypto;
-
--- Users
-create table if not exists users (
-  id uuid primary key default gen_random_uuid(),
-  uid text not null unique,
-  display text not null,
-  created timestamptz not null default now()
+-- Users table
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- Groups
-create table if not exists groups (
-  id uuid primary key default gen_random_uuid(),
-  code text not null unique,
-  name text not null,
-  created timestamptz not null default now()
+-- Groups table
+CREATE TABLE groups (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    join_code VARCHAR(12) UNIQUE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create table if not exists group_members (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references users(id) on delete cascade,
-  group_id uuid not null references groups(id) on delete cascade,
-  joined_at timestamptz not null default now(),
-  unique (user_id, group_id)
+-- Group Members table (many-to-many join between users and groups)
+CREATE TABLE group_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    joined_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, group_id)  -- prevent duplicate memberships
 );
 
--- Photos
-create table if not exists photos (
-  id uuid primary key default gen_random_uuid(),
-  group_id uuid not null references groups(id) on delete cascade,
-  uploaded_by uuid references users(id) on delete set null,
-  display_name text,
-  photo_url text not null,
-  created_at timestamptz not null default now()
+-- Photos table
+CREATE TABLE photos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- allow anonymous
+    s3_key TEXT NOT NULL,
+    uploaded_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMP NOT NULL
 );
-
--- Helpful indexes
-create index if not exists idx_group_members_group on group_members (group_id);
-create index if not exists idx_group_members_user on group_members (user_id);
-create index if not exists idx_photos_group_created on photos (group_id, created_at desc);
-
-
 

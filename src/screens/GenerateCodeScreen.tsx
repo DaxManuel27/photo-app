@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   heading: { color: '#fff', fontSize: 28, fontWeight: '700', marginBottom: 24, letterSpacing: 0.3 },
   label: { color: '#fff', fontSize: 18, fontWeight: '600', marginBottom: 10 },
   input: {
-    backgroundColor: '#000',
+    backgroundColor: '#000',    
     color: '#fff',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.25)',
@@ -79,5 +79,3 @@ const styles = StyleSheet.create({
   copyButton: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10, alignSelf: 'center' },
   copyButtonText: { color: '#000', fontSize: 16, fontWeight: '700' },
 });
-
-
