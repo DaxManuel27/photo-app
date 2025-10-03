@@ -12,6 +12,7 @@ CREATE TABLE groups (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+
 -- Group Members table (many-to-many join between users and groups)
 CREATE TABLE group_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -20,6 +21,7 @@ CREATE TABLE group_members (
     joined_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(user_id, group_id)  -- prevent duplicate memberships
 );
+
 
 -- Photos table
 CREATE TABLE photos (
