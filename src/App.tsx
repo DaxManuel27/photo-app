@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -6,6 +6,7 @@ import NameScreen from './screens/NameScreen';
 import JoinCodeScreen from './screens/JoinCodeScreen';
 import HomeScreen from './screens/HomeScreen';
 import GenerateCodeScreen from './screens/GenerateCodeScreen';
+import { testSupabaseConnection } from './lib/supabase';
 
 export type RootStackParamList = {
   Name: undefined;
@@ -20,7 +21,6 @@ const BlackWhiteTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: '#000',
     text: '#fff',
     primary: '#fff',
     card: '#000',
@@ -30,6 +30,8 @@ const BlackWhiteTheme = {
 };
 
 export default function App() {
+  console.log('🎯 App.tsx rendering...');
+  
   return (
     <NavigationContainer theme={BlackWhiteTheme}>
       <StatusBar style="light" />
