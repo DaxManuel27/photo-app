@@ -61,7 +61,7 @@ export default function NameScreen({ navigation }: Props) {
                 await AsyncStorage.setItem('userName', trimmed);
               } catch {}
               setLoading(false);
-              navigation.navigate('JoinCode', { name: trimmed });
+              navigation.navigate('Home', { name: trimmed });
             }}
           >
             <Text style={[styles.buttonText, (!canContinue || loading) && styles.buttonTextDisabled]}>{loading ? 'Saving…' : 'Continue'}</Text>
