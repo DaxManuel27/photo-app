@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LoginScreen from './screens/LoginScreen';
 import NameScreen from './screens/NameScreen';
 import JoinCodeScreen from './screens/JoinCodeScreen';
 import HomeScreen from './screens/HomeScreen';
@@ -9,6 +10,7 @@ import GenerateCodeScreen from './screens/GenerateCodeScreen';
 import { testSupabaseConnection } from './lib/supabase';
 
 export type RootStackParamList = {
+  Login: undefined;
   Name: undefined;
   JoinCode: { name: string };
   Home: { name: string };
@@ -36,7 +38,7 @@ export default function App() {
     <NavigationContainer theme={BlackWhiteTheme}>
       <StatusBar style="light" />
       <Stack.Navigator
-        initialRouteName="Name"
+        initialRouteName="Login"
         screenOptions={{
           headerStyle: { backgroundColor: '#000' },
           headerTitleStyle: { color: '#fff', fontWeight: '600' },
@@ -44,6 +46,11 @@ export default function App() {
           contentStyle: { backgroundColor: '#000' },
         }}
       >
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ title: 'Login' }}
+        />
         <Stack.Screen
           name="Name"
           component={NameScreen}
