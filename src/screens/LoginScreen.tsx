@@ -9,6 +9,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -18,20 +19,32 @@ export default function LoginScreen({ navigation }: Props) {
       return;
     }
 
+    if (isSignUp && !name.trim()) {
+      Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+
     setLoading(true);
     
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password: password.trim(),
+          options: {
+            data: {
+              display_name: name.trim(),
+            }
+          }
         });
         
         if (error) {
           Alert.alert('Sign Up Error', error.message);
-        } else {
+        } else if (data.user) {
+          console.log('✅ User created with display_name:', name.trim());
           Alert.alert('Success', 'Account created! Please check your email for verification.');
           setIsSignUp(false);
+          setName(''); // Clear name field
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -42,7 +55,8 @@ export default function LoginScreen({ navigation }: Props) {
         if (error) {
           Alert.alert('Login Error', error.message);
         } else {
-          navigation.navigate('Name');
+          // Navigation will be handled automatically by auth state change
+          // No need to manually navigate - the AppNavigator will show protected routes
         }
       }
     } catch (error) {
@@ -53,13 +67,26 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
-  const canContinue = email.trim().length > 0 && password.trim().length > 0;
+  const canContinue = email.trim().length > 0 && password.trim().length > 0 && (!isSignUp || name.trim().length > 0);
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.inner}>
           <Text style={styles.heading}>{isSignUp ? 'Create Account' : 'Welcome Back'}</Text>
+          
+          {isSignUp && (
+            <TextInput
+              style={styles.input}
+              placeholder="Your Name"
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="next"
+            />
+          )}
           
           <TextInput
             style={styles.input}

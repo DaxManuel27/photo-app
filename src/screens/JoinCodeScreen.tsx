@@ -1,23 +1,60 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Alert, ActivityIndicator } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
+import { useAuth } from '../contexts/AuthContext';
+import { joinGroup } from '../lib/groups';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'JoinCode'>;
 
-export default function JoinCodeScreen({ route, navigation }: Props) {
-  const { name } = route.params;
+export default function JoinCodeScreen({ navigation }: Props) {
+  const { userName, user } = useAuth();
   const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  // Get display name with fallbacks
+  const displayName = userName || user?.email?.split('@')[0] || 'Friend';
 
   const normalized = code.toUpperCase();
-  const canJoin = normalized.trim().length > 0;
+  const canJoin = normalized.trim().length > 0 && !loading;
+
+  const handleJoinGroup = async () => {
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to join a group');
+      return;
+    }
+
+    if (!normalized.trim()) {
+      Alert.alert('Error', 'Please enter a join code');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await joinGroup(normalized.trim(), user.id);
+      
+      if (result.success && result.group) {
+        Alert.alert('Success', `Successfully joined "${result.group.group_name}"!`, [
+          { text: 'OK', onPress: () => navigation.replace('Home') }
+        ]);
+      } else {
+        Alert.alert('Error', result.error || 'Failed to join group');
+      }
+    } catch (error) {
+      console.error('Error joining group:', error);
+      Alert.alert('Error', 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.inner}>
           <Text style={styles.subtle}>Welcome</Text>
-          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.name}>{displayName}</Text>
 
           <Text style={styles.label}>Enter join code</Text>
           <TextInput
@@ -37,9 +74,13 @@ export default function JoinCodeScreen({ route, navigation }: Props) {
             activeOpacity={0.8}
             style={[styles.button, !canJoin && styles.buttonDisabled]}
             disabled={!canJoin}
-            onPress={() => navigation.replace('Home', { name })}
+            onPress={handleJoinGroup}
           >
-            <Text style={[styles.buttonText, !canJoin && styles.buttonTextDisabled]}>Join</Text>
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={[styles.buttonText, !canJoin && styles.buttonTextDisabled]}>Join</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity

@@ -9,6 +9,7 @@ CREATE TABLE users (
 CREATE TABLE groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     join_code VARCHAR(12) UNIQUE NOT NULL,
+    group_name TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

@@ -1,19 +1,18 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './screens/LoginScreen';
-import NameScreen from './screens/NameScreen';
 import JoinCodeScreen from './screens/JoinCodeScreen';
 import HomeScreen from './screens/HomeScreen';
 import GenerateCodeScreen from './screens/GenerateCodeScreen';
-import { testSupabaseConnection } from './lib/supabase';
 
 export type RootStackParamList = {
   Login: undefined;
-  Name: undefined;
-  JoinCode: { name: string };
-  Home: { name: string };
+  Home: undefined;
+  JoinCode: undefined;
   GenerateCode: undefined;
 };
 
@@ -31,14 +30,26 @@ const BlackWhiteTheme = {
   },
 };
 
-export default function App() {
-  console.log('🎯 App.tsx rendering...');
-  
+// Loading screen component
+const LoadingScreen = () => (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator size="large" color="#fff" />
+    <Text style={styles.loadingText}>Loading...</Text>
+  </View>
+);
+
+// Main navigation component with auth protection
+const AppNavigator = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <NavigationContainer theme={BlackWhiteTheme}>
       <StatusBar style="light" />
       <Stack.Navigator
-        initialRouteName="Login"
         screenOptions={{
           headerStyle: { backgroundColor: '#000' },
           headerTitleStyle: { color: '#fff', fontWeight: '600' },
@@ -46,32 +57,59 @@ export default function App() {
           contentStyle: { backgroundColor: '#000' },
         }}
       >
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ title: 'Login' }}
-        />
-        <Stack.Screen
-          name="Name"
-          component={NameScreen}
-          options={{ title: "What's your name?" }}
-        />
-        <Stack.Screen
-          name="JoinCode"
-          component={JoinCodeScreen}
-          options={{ title: 'Join code' }}
-        />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ title: 'Home' }}
-        />
-        <Stack.Screen
-          name="GenerateCode"
-          component={GenerateCodeScreen}
-          options={{ title: 'Create join code' }}
-        />
+        {!user ? (
+          // Unauthenticated stack - only login screen accessible
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ title: 'Login', headerShown: false }}
+          />
+        ) : (
+          // Authenticated stack - all protected screens accessible
+          <>
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ title: 'Home' }}
+            />
+            <Stack.Screen
+              name="JoinCode"
+              component={JoinCodeScreen}
+              options={{ title: 'Join code' }}
+            />
+            <Stack.Screen
+              name="GenerateCode"
+              component={GenerateCodeScreen}
+              options={{ title: 'Create join code' }}
+            />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
+};
+
+// Main App component with AuthProvider
+export default function App() {
+  console.log('🎯 App.tsx rendering...');
+  
+  return (
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
+  );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 16,
+  },
+});
