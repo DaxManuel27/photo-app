@@ -256,7 +256,7 @@ export const getUserGroups = async (userId: string): Promise<{ success: boolean;
       };
     }
 
-    const groups = data?.map(item => item.groups).filter(Boolean) as Group[];
+    const groups = data?.map(item => item.groups).filter(Boolean) as unknown as Group[] || [];
 
     return {
       success: true,

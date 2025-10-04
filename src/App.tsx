@@ -5,15 +5,22 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './screens/LoginScreen';
+import NameScreen from './screens/NameScreen';
 import JoinCodeScreen from './screens/JoinCodeScreen';
 import HomeScreen from './screens/HomeScreen';
 import GenerateCodeScreen from './screens/GenerateCodeScreen';
+import GroupScreen from './screens/GroupScreen';
 
 export type RootStackParamList = {
   Login: undefined;
+  Name: undefined;
   Home: undefined;
   JoinCode: undefined;
   GenerateCode: undefined;
+  Group: {
+    groupId: string;
+    groupName: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -68,6 +75,11 @@ const AppNavigator = () => {
           // Authenticated stack - all protected screens accessible
           <>
             <Stack.Screen
+              name="Name"
+              component={NameScreen}
+              options={{ title: 'Name', headerShown: false }}
+            />
+            <Stack.Screen
               name="Home"
               component={HomeScreen}
               options={{ title: 'Home' }}
@@ -81,6 +93,11 @@ const AppNavigator = () => {
               name="GenerateCode"
               component={GenerateCodeScreen}
               options={{ title: 'Create join code' }}
+            />
+            <Stack.Screen
+              name="Group"
+              component={GroupScreen}
+              options={{ title: 'Group Photos' }}
             />
           </>
         )}

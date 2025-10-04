@@ -45,7 +45,14 @@ export default function HomeScreen({ navigation }: Props) {
 
   // Group Card Component
   const GroupCard = ({ group }: { group: Group }) => (
-    <TouchableOpacity style={styles.groupCard} activeOpacity={0.8}>
+    <TouchableOpacity 
+      style={styles.groupCard} 
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('Group', {
+        groupId: group.id,
+        groupName: group.group_name
+      })}
+    >
       <View style={styles.groupImagePlaceholder}>
         <Text style={styles.placeholderIcon}>📸</Text>
       </View>

@@ -12,6 +12,7 @@ const s3 = new AWS.S3();
 export interface UploadResult {
   success: boolean;
   url?: string;
+  s3Key?: string;
   error?: string;
 }
 
@@ -28,10 +29,11 @@ export const uploadImageToS3 = async (
     // Create unique filename with timestamp
     const timestamp = Date.now();
     const uniqueFileName = `${timestamp}-${fileName}`;
+    const s3Key = `photos/${uniqueFileName}`;
     
     const params = {
       Bucket: bucketName,
-      Key: `photos/${uniqueFileName}`,
+      Key: s3Key,
       Body: blob,
       ContentType: blob.type || 'image/jpeg',
       ACL: 'public-read', // Make images publicly accessible
@@ -42,6 +44,7 @@ export const uploadImageToS3 = async (
     return {
       success: true,
       url: result.Location,
+      s3Key: s3Key, // Return the S3 key for database storage
     };
   } catch (error) {
     console.error('Error uploading to S3:', error);
