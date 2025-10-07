@@ -1,36 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
-import { supabase } from '../lib/supabase'; // Add this import
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Name'>;
 
 export default function NameScreen({ navigation }: Props) {
+  const { user, setUserName } = useAuth();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const saved = await AsyncStorage.getItem('userName');
-        if (saved) {
-          setName(saved);
-        }
-        
-        // Test Supabase connection
-        console.log('Testing Supabase connection...');
-        const { data, error } = await supabase.from('users').select('count', { count: 'exact' });
-        if (error) {
-          console.error('Supabase connection failed:', error);
-        } else {
-          console.log('✅ Supabase connected successfully!', data);
-        }
-      } catch (err) {
-        console.error('Error:', err);
-      }
-    })();
+    // No need to load from AsyncStorage anymore
+    // The name will be saved directly to the database
   }, []);
 
   const canContinue = name.trim().length > 0;
@@ -56,12 +40,40 @@ export default function NameScreen({ navigation }: Props) {
             disabled={!canContinue || loading}
             onPress={async () => {
               const trimmed = name.trim();
+              if (!user) {
+                Alert.alert('Error', 'You must be logged in to set your name');
+                return;
+              }
+
               try {
                 setLoading(true);
-                await AsyncStorage.setItem('userName', trimmed);
-              } catch {}
-              setLoading(false);
-              navigation.navigate('Home');
+                
+                // Save name to database
+                const { error } = await supabase
+                  .from('users')
+                  .upsert({
+                    id: user.id,
+                    name: trimmed,
+                    created_at: new Date().toISOString()
+                  });
+
+                if (error) {
+                  console.error('Error saving name to database:', error);
+                  Alert.alert('Error', 'Failed to save name. Please try again.');
+                  return;
+                }
+
+                // Update the auth context
+                setUserName(trimmed);
+                
+                console.log('✅ Name saved successfully to database');
+                navigation.navigate('Home');
+              } catch (error) {
+                console.error('Error saving name:', error);
+                Alert.alert('Error', 'Failed to save name. Please try again.');
+              } finally {
+                setLoading(false);
+              }
             }}
           >
             <Text style={[styles.buttonText, (!canContinue || loading) && styles.buttonTextDisabled]}>{loading ? 'Saving…' : 'Continue'}</Text>

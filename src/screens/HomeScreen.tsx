@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, RefreshControl } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,37 +12,61 @@ export default function HomeScreen({ navigation }: Props) {
   const { signOut, user, userName } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Use userName from context, fallback to email username, then "Friend"
   const displayName = userName || 'Friend';
 
+  // Function to fetch groups
+  const fetchGroups = async (isRefresh = false) => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      console.log('🔍 Fetching user groups...');
+      const result = await getUserGroups(user.id);
+      
+      if (result.success && result.groups) {
+        console.log('✅ Groups fetched successfully:', result.groups);
+        setGroups(result.groups);
+      } else {
+        console.error('❌ Error fetching groups:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Unexpected error fetching groups:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Handle pull to refresh
+  const onRefresh = () => {
+    fetchGroups(true);
+  };
+
   // Fetch user groups on component mount
   useEffect(() => {
-    const fetchGroups = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        console.log('🔍 Fetching user groups...');
-        const result = await getUserGroups(user.id);
-        
-        if (result.success && result.groups) {
-          console.log('✅ Groups fetched successfully:', result.groups);
-          setGroups(result.groups);
-        } else {
-          console.error('❌ Error fetching groups:', result.error);
-        }
-      } catch (error) {
-        console.error('❌ Unexpected error fetching groups:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchGroups();
   }, [user]);
+
+  // Refresh groups when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        console.log('🔄 HomeScreen focused, refreshing groups...');
+        fetchGroups();
+      }
+    }, [user])
+  );
 
   // Group Card Component
   const GroupCard = ({ group }: { group: Group }) => (
@@ -83,7 +108,19 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
+      <ScrollView 
+        style={styles.scrollContainer} 
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#fff"
+            title="Pull to refresh"
+            titleColor="#fff"
+          />
+        }
+      >
         <View style={styles.header}>
           <Text style={styles.heading}>Welcome, {displayName}</Text>
           <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>

@@ -47,7 +47,7 @@ const LoadingScreen = () => (
 
 // Main navigation component with auth protection
 const AppNavigator = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, needsName } = useAuth();
 
   if (loading) {
     return <LoadingScreen />;
@@ -74,11 +74,13 @@ const AppNavigator = () => {
         ) : (
           // Authenticated stack - all protected screens accessible
           <>
-            <Stack.Screen
-              name="Name"
-              component={NameScreen}
-              options={{ title: 'Name', headerShown: false }}
-            />
+            {needsName && (
+              <Stack.Screen
+                name="Name"
+                component={NameScreen}
+                options={{ title: 'Name', headerShown: false }}
+              />
+            )}
             <Stack.Screen
               name="Home"
               component={HomeScreen}

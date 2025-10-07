@@ -15,6 +15,7 @@ import type { RootStackParamList } from '../App';
 import { useAuth } from '../contexts/AuthContext';
 import { usePhotoUpload } from './usePhotoUpload';
 import { getGroupPhotos, Photo } from '../lib/photos';
+import { AWSTestButton } from '../components/AWSTestButton';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Group'>;
 
@@ -156,6 +157,9 @@ export default function GroupScreen({ navigation, route }: Props) {
           <Text style={styles.cameraButtonIcon}>📷</Text>
         )}
       </TouchableOpacity>
+
+      {/* AWS Test Button */}
+      <AWSTestButton />
     </View>
   );
 }

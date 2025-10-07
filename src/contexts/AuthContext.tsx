@@ -7,6 +7,7 @@ interface AuthContextType {
   session: Session | null;
   userName: string | null;
   loading: boolean;
+  needsName: boolean;
   signOut: () => Promise<void>;
   setUserName: (name: string) => void;
 }
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   userName: null,
   loading: true,
+  needsName: false,
   signOut: async () => {},
   setUserName: () => {},
 });
@@ -36,24 +38,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [needsName, setNeedsName] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Function to get user display name from auth metadata
-  const getUserDisplayName = (user: User | null) => {
+  // Function to get user display name from database
+  const getUserDisplayName = async (user: User | null) => {
     if (!user) {
       console.log('❌ No user available');
       setUserName(null);
+      setNeedsName(false);
       return;
     }
 
-    const displayName = user.user_metadata?.display_name;
-    
-    if (displayName) {
-      console.log('✅ Found display_name in metadata:', displayName);
-      setUserName(displayName);
-    } else {
-      console.log('⚠️ No display_name in metadata');
-      setUserName(null);
+    try {
+      // Check if user exists in our users table
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching user data:', error);
+        setNeedsName(true);
+        return;
+      }
+
+      if (userData && userData.name) {
+        console.log('✅ Found user name in database:', userData.name);
+        setUserName(userData.name);
+        setNeedsName(false);
+      } else {
+        console.log('⚠️ No name found in database, user needs to set name');
+        setUserName(null);
+        setNeedsName(true);
+      }
+    } catch (error) {
+      console.error('Error in getUserDisplayName:', error);
+      setNeedsName(true);
     }
   };
 
@@ -69,8 +91,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setSession(session);
           setUser(session?.user ?? null);
           
-          // Get display name from user metadata
-          getUserDisplayName(session?.user ?? null);
+          // Get display name from database
+          await getUserDisplayName(session?.user ?? null);
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
@@ -89,14 +111,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Get display name from user metadata when signing in
+        // Get display name from database when signing in
         if (event === 'SIGNED_IN') {
-          getUserDisplayName(session?.user ?? null);
+          await getUserDisplayName(session?.user ?? null);
         }
         
-        // Clear userName when signing out
+        // Clear userName and needsName when signing out
         if (event === 'SIGNED_OUT') {
           setUserName(null);
+          setNeedsName(false);
         }
         
         setLoading(false);
@@ -127,6 +150,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     session,
     userName,
     loading,
+    needsName,
     signOut,
     setUserName,
   };

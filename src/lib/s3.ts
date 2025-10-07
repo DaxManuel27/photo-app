@@ -1,5 +1,11 @@
 import AWS from 'aws-sdk';
 
+console.log('🔧 AWS Configuration Debug:');
+console.log('Access Key ID length:', process.env.EXPO_PUBLIC_AWS_ACCESS_KEY_ID?.length);
+console.log('Secret Key length:', process.env.EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY?.length);
+console.log('Region:', process.env.EXPO_PUBLIC_AWS_REGION);
+console.log('Bucket:', process.env.EXPO_PUBLIC_S3_BUCKET_NAME);
+
 // Configure AWS
 AWS.config.update({
   accessKeyId: process.env.EXPO_PUBLIC_AWS_ACCESS_KEY_ID!,
@@ -36,7 +42,7 @@ export const uploadImageToS3 = async (
       Key: s3Key,
       Body: blob,
       ContentType: blob.type || 'image/jpeg',
-      ACL: 'public-read', // Make images publicly accessible
+     // ACL: 'public-read', // Make images publicly accessible
     };
 
     const result = await s3.upload(params).promise();
