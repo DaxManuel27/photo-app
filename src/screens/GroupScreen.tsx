@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePhotoUpload } from './usePhotoUpload';
 import { getGroupPhotos, Photo } from '../lib/photos';
 import { AWSTestButton } from '../components/AWSTestButton';
+import { generatePresignedUrl } from '../lib/s3-debug';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Group'>;
 
@@ -29,6 +30,7 @@ export default function GroupScreen({ navigation, route }: Props) {
   const { takeAndUploadPhotoToGroup, uploading } = usePhotoUpload();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Get group info from route params
   const groupId = route.params?.groupId;
@@ -40,23 +42,35 @@ export default function GroupScreen({ navigation, route }: Props) {
     }
   }, [groupId]);
 
-  const fetchGroupPhotos = async () => {
+  const fetchGroupPhotos = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      
+      console.log('📸 Fetching photos for group:', groupId);
       const result = await getGroupPhotos(groupId);
       
       if (result.success && result.photos) {
+        console.log('✅ Loaded', result.photos.length, 'photos');
         setPhotos(result.photos);
       } else {
-        console.error('Error fetching photos:', result.error);
+        console.error('❌ Error fetching photos:', result.error);
         Alert.alert('Error', 'Failed to load photos');
       }
     } catch (error) {
-      console.error('Error fetching photos:', error);
+      console.error('❌ Error fetching photos:', error);
       Alert.alert('Error', 'Failed to load photos');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchGroupPhotos(true);
   };
 
   const handleTakePhoto = async () => {
@@ -76,7 +90,7 @@ export default function GroupScreen({ navigation, route }: Props) {
       if (result.success) {
         Alert.alert('Success', 'Photo uploaded successfully!');
         // Refresh photos
-        fetchGroupPhotos();
+        fetchGroupPhotos(true);
       } else {
         Alert.alert('Error', result.error || 'Failed to upload photo');
       }
@@ -86,21 +100,87 @@ export default function GroupScreen({ navigation, route }: Props) {
     }
   };
 
-  const renderPhoto = ({ item }: { item: Photo }) => {
-    // Construct S3 URL from bucket name and S3 key
-    const bucketName = process.env.EXPO_PUBLIC_S3_BUCKET_NAME;
-    const region = process.env.EXPO_PUBLIC_AWS_REGION;
-    const s3Url = `https://${bucketName}.s3.${region}.amazonaws.com/${item.s3_key}`;
+  // PhotoItem component to handle hooks properly
+  const PhotoItem = ({ item }: { item: Photo }) => {
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [loadingImage, setLoadingImage] = useState(true);
+    
+    // Generate presigned URL for secure access
+    useEffect(() => {
+      const loadImageUrl = async () => {
+        try {
+          setLoadingImage(true);
+          const presignedUrl = await generatePresignedUrl(item.s3_key);
+          if (presignedUrl) {
+            setImageUrl(presignedUrl);
+          } else {
+            // Fallback to direct S3 URL
+            const bucketName = process.env.EXPO_PUBLIC_S3_BUCKET_NAME;
+            const region = process.env.EXPO_PUBLIC_AWS_REGION;
+            const fallbackUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${item.s3_key}`;
+            setImageUrl(fallbackUrl);
+          }
+        } catch (error) {
+          console.error('Error generating presigned URL:', error);
+          // Fallback to direct S3 URL
+          const bucketName = process.env.EXPO_PUBLIC_S3_BUCKET_NAME;
+          const region = process.env.EXPO_PUBLIC_AWS_REGION;
+          const fallbackUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${item.s3_key}`;
+          setImageUrl(fallbackUrl);
+        } finally {
+          setLoadingImage(false);
+        }
+      };
+      
+      loadImageUrl();
+    }, [item.s3_key]);
+    
+    const handlePhotoPress = () => {
+      console.log('Photo pressed:', {
+        id: item.id,
+        s3Key: item.s3_key,
+        uploadedAt: item.uploaded_at,
+        url: imageUrl
+      });
+      
+      // Navigate to photo detail screen
+      navigation.navigate('PhotoDetail', {
+        photo: item
+      });
+    };
+    
+    if (loadingImage || !imageUrl) {
+      return (
+        <View style={[styles.photoContainer, styles.photoLoading]}>
+          <ActivityIndicator color="#fff" size="small" />
+        </View>
+      );
+    }
     
     return (
-      <TouchableOpacity style={styles.photoContainer} activeOpacity={0.8}>
+      <TouchableOpacity 
+        style={styles.photoContainer} 
+        activeOpacity={0.8}
+        onPress={handlePhotoPress}
+      >
         <Image 
-          source={{ uri: s3Url }} 
+          source={{ uri: imageUrl }} 
           style={styles.photo}
           resizeMode="cover"
+          onError={(error) => {
+            console.error('❌ Error loading image:', imageUrl);
+            console.error('Error details:', error.nativeEvent.error);
+          }}
+          onLoad={() => {
+            console.log('✅ Image loaded successfully:', imageUrl);
+          }}
         />
       </TouchableOpacity>
     );
+  };
+
+  const renderPhoto = ({ item }: { item: Photo }) => {
+    return <PhotoItem item={item} />;
   };
 
   const renderEmptyState = () => (
@@ -141,6 +221,8 @@ export default function GroupScreen({ navigation, route }: Props) {
           columnWrapperStyle={styles.photoRow}
           ListEmptyComponent={renderEmptyState}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
         />
       )}
 
@@ -270,5 +352,10 @@ const styles = StyleSheet.create({
   },
   cameraButtonIcon: {
     fontSize: 24,
+  },
+  photoLoading: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -171,7 +171,6 @@ export const uploadImageToS3 = async (
     console.log('    Bucket:', params.Bucket);
     console.log('    Key:', params.Key);
     console.log('    ContentType:', params.ContentType);
-    console.log('    ACL:', params.ACL);
     console.log('    Body size:', blob.size, 'bytes');
     
     // Step 4: Test bucket access before upload

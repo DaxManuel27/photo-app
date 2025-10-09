@@ -10,6 +10,8 @@ import JoinCodeScreen from './screens/JoinCodeScreen';
 import HomeScreen from './screens/HomeScreen';
 import GenerateCodeScreen from './screens/GenerateCodeScreen';
 import GroupScreen from './screens/GroupScreen';
+import PhotoDetailScreen from './screens/PhotoDetailScreen';
+import { Photo } from './lib/photos';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -20,6 +22,9 @@ export type RootStackParamList = {
   Group: {
     groupId: string;
     groupName: string;
+  };
+  PhotoDetail: {
+    photo: Photo;
   };
 };
 
@@ -100,6 +105,11 @@ const AppNavigator = () => {
               name="Group"
               component={GroupScreen}
               options={{ title: 'Group Photos' }}
+            />
+            <Stack.Screen
+              name="PhotoDetail"
+              component={PhotoDetailScreen}
+              options={{ title: 'Photo', headerShown: false }}
             />
           </>
         )}
