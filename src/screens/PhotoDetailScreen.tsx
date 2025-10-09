@@ -13,6 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
 import { generatePresignedUrl } from '../lib/s3-debug';
 import { Photo } from '../lib/photos';
+import CameraFilterOverlay from '../components/CameraFilterOverlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PhotoDetail'>;
 
@@ -88,17 +89,9 @@ export default function PhotoDetailScreen({ navigation, route }: Props) {
             <Text style={styles.loadingText}>Loading photo...</Text>
           </View>
         ) : imageUrl ? (
-          <Image 
-            source={{ uri: imageUrl }} 
+          <CameraFilterOverlay 
+            imageUri={imageUrl}
             style={styles.photo}
-            resizeMode="contain"
-            onError={(error) => {
-              console.error('❌ Error loading image:', imageUrl);
-              console.error('Error details:', error.nativeEvent.error);
-            }}
-            onLoad={() => {
-              console.log('✅ Image loaded successfully:', imageUrl);
-            }}
           />
         ) : (
           <View style={styles.errorContainer}>

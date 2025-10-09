@@ -17,6 +17,7 @@ import { usePhotoUpload } from './usePhotoUpload';
 import { getGroupPhotos, Photo } from '../lib/photos';
 import { AWSTestButton } from '../components/AWSTestButton';
 import { generatePresignedUrl } from '../lib/s3-debug';
+import CameraFilterOverlay from '../components/CameraFilterOverlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Group'>;
 
@@ -100,7 +101,7 @@ export default function GroupScreen({ navigation, route }: Props) {
     }
   };
 
-  // PhotoItem component to handle hooks properly
+  // PhotoItem component to handle hooks properly with CameraFilterOverlay
   const PhotoItem = ({ item }: { item: Photo }) => {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [loadingImage, setLoadingImage] = useState(true);
@@ -163,17 +164,10 @@ export default function GroupScreen({ navigation, route }: Props) {
         activeOpacity={0.8}
         onPress={handlePhotoPress}
       >
-        <Image 
-          source={{ uri: imageUrl }} 
+        {/* Use CameraFilterOverlay for digital camera aesthetic */}
+        <CameraFilterOverlay 
+          imageUri={imageUrl}
           style={styles.photo}
-          resizeMode="cover"
-          onError={(error) => {
-            console.error('❌ Error loading image:', imageUrl);
-            console.error('Error details:', error.nativeEvent.error);
-          }}
-          onLoad={() => {
-            console.log('✅ Image loaded successfully:', imageUrl);
-          }}
         />
       </TouchableOpacity>
     );
