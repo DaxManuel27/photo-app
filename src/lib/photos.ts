@@ -40,9 +40,9 @@ export const uploadPhotoToGroup = async (
       };
     }
 
-    // Set default expiration to 30 days from now
+    // Set default expiration to 7 days from now
     const defaultExpiration = new Date();
-    defaultExpiration.setDate(defaultExpiration.getDate() + 30);
+    defaultExpiration.setDate(defaultExpiration.getDate() + 7);
     const expirationDate = expiresAt || defaultExpiration;
 
     // Insert photo record into database

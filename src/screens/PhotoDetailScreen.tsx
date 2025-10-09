@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
-import { generatePresignedUrl } from '../lib/s3-debug';
+import { generatePresignedUrl } from '../lib/s3';
 import { Photo } from '../lib/photos';
 import CameraFilterOverlay from '../components/CameraFilterOverlay';
 
@@ -65,6 +65,21 @@ export default function PhotoDetailScreen({ navigation, route }: Props) {
     });
   };
 
+  const getDaysUntilExpiration = (expiresAt: string) => {
+    const now = new Date();
+    const expirationDate = new Date(expiresAt);
+    const diffTime = expirationDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 0) {
+      return 'Expired';
+    } else if (diffDays === 1) {
+      return 'Expires in 1 day';
+    } else {
+      return `Expires in ${diffDays} days`;
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -105,6 +120,9 @@ export default function PhotoDetailScreen({ navigation, route }: Props) {
       <View style={styles.infoContainer}>
         <Text style={styles.uploadDate}>
           Uploaded on {formatDate(photo.uploaded_at)}
+        </Text>
+        <Text style={styles.expirationText}>
+          {getDaysUntilExpiration(photo.expires_at)}
         </Text>
         <Text style={styles.photoId}>
           Photo ID: {photo.id}
@@ -193,6 +211,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
+    marginBottom: 8,
+  },
+  expirationText: {
+    color: '#ff6b6b',
+    fontSize: 16,
+    fontWeight: '600',
     marginBottom: 8,
   },
   photoId: {

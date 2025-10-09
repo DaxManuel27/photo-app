@@ -15,8 +15,7 @@ import type { RootStackParamList } from '../App';
 import { useAuth } from '../contexts/AuthContext';
 import { usePhotoUpload } from './usePhotoUpload';
 import { getGroupPhotos, Photo } from '../lib/photos';
-import { AWSTestButton } from '../components/AWSTestButton';
-import { generatePresignedUrl } from '../lib/s3-debug';
+import { generatePresignedUrl } from '../lib/s3';
 import CameraFilterOverlay from '../components/CameraFilterOverlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Group'>;
@@ -106,6 +105,21 @@ export default function GroupScreen({ navigation, route }: Props) {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [loadingImage, setLoadingImage] = useState(true);
     
+    const getDaysUntilExpiration = (expiresAt: string) => {
+      const now = new Date();
+      const expirationDate = new Date(expiresAt);
+      const diffTime = expirationDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays <= 0) {
+        return 'Expired';
+      } else if (diffDays === 1) {
+        return '1d';
+      } else {
+        return `${diffDays}d`;
+      }
+    };
+    
     // Generate presigned URL for secure access
     useEffect(() => {
       const loadImageUrl = async () => {
@@ -169,6 +183,12 @@ export default function GroupScreen({ navigation, route }: Props) {
           imageUri={imageUrl}
           style={styles.photo}
         />
+        {/* Expiration overlay */}
+        <View style={styles.expirationOverlay}>
+          <Text style={styles.expirationText}>
+            {getDaysUntilExpiration(item.expires_at)}
+          </Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -234,8 +254,7 @@ export default function GroupScreen({ navigation, route }: Props) {
         )}
       </TouchableOpacity>
 
-      {/* AWS Test Button */}
-      <AWSTestButton />
+      {/* AWS Test Button removed */}
     </View>
   );
 }
@@ -351,5 +370,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  expirationOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  expirationText: {
+    color: '#ff6b6b',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

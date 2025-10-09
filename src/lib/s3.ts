@@ -37,11 +37,20 @@ export const uploadImageToS3 = async (
     const uniqueFileName = `${timestamp}-${fileName}`;
     const s3Key = `photos/${uniqueFileName}`;
     
+    // Set expiration date to 7 days from now
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 7);
+    
     const params = {
       Bucket: bucketName,
       Key: s3Key,
       Body: blob,
       ContentType: blob.type || 'image/jpeg',
+      Expires: expirationDate,
+      Metadata: {
+        'expires-at': expirationDate.toISOString(),
+        'auto-delete': 'true'
+      }
      // ACL: 'public-read', // Make images publicly accessible
     };
 
