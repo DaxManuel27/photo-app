@@ -53,11 +53,9 @@ const LoadingScreen = () => (
 // Main navigation component with auth protection
 const AppNavigator = () => {
   const { user, loading, needsName } = useAuth();
-
   if (loading) {
     return <LoadingScreen />;
   }
-
   return (
     <NavigationContainer theme={BlackWhiteTheme}>
       <StatusBar style="light" />
